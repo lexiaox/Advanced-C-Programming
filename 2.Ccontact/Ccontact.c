@@ -192,6 +192,7 @@ void change_age (char *username,int userage_new) {
 }
 
 int judge(char **arr, int count_readline) {
+    //判断命令并执行
     switch (arr[0][0]) {
             case '+':
                 if (count_readline < 4) {
@@ -204,7 +205,6 @@ int judge(char **arr, int count_readline) {
             case '-':
                 delete(arr[1]);
                 break;
-
 
             case 'f':
                 find(arr[1]);
@@ -246,13 +246,55 @@ int judge(char **arr, int count_readline) {
     return 0;
 }
 
-int main() {
-    int end_program_1=0;
-    FILE * fp_read = fopen("./doc/read.txt","r");
+void save(void) {
+    //将通讯录保存到文件
+    FILE * fp_write = fopen("./doc/Address_book.txt","w");
+    if ( fp_write == NULL ) {
+        fprintf(stderr,"Error opening file");
+        return;
+    }
+    ContactBook * target = Head->next;
+    fprintf(fp_write, "name   |phone    |age\n");
+    while ( target != NULL ) {
+        fprintf(fp_write, "%s   |%s    |%d\n", target->data->name, target->data->phone, target->data->age);
+        target = target->next;
+    }
+    fclose(fp_write);
+}
+
+void read_Address_book(void) {
+    //从文件读取通讯录
+    FILE * fp_read = fopen("./doc/Address_book.txt","r");
     if ( fp_read == NULL ) {
         fprintf(stderr,"Error opening file");
-        return 1;
+        return;
     }
+    char line[120];
+    char *arr[3];
+    while ( fgets(line, sizeof(line), fp_read) ) {
+        int count_readline;
+        count_readline=split_line(line,arr);
+        if (count_readline < 3 || strcmp(arr[0], "name") == 0) {
+            continue;
+        }
+        increase(arr[0], arr[1], atoi(arr[2]));
+    }
+    fclose(fp_read);
+}
+
+int main() {
+    //程序入口
+    int end_program_1=0;
+
+    read_Address_book();//从文件读取通讯录
+
+    FILE * fp_read_command = fopen("./doc/command.txt","r");
+    if ( fp_read_command == NULL ) {
+        fprintf(stderr,"Error opening file");
+        return 1;
+    }//初始化通讯录
+
+
     book = (ContactBook *)malloc(sizeof(ContactBook));
     if (book == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
@@ -261,18 +303,23 @@ int main() {
     Head = book;
     book->data = NULL;
     book->next = NULL;
-
     char line[120];
     char *arr[5];
-    while ( fgets(line, sizeof(line), fp_read) ) {
+
+
+    while ( fgets(line, sizeof(line), fp_read_command) ) {
         int count_readline;
         count_readline=split_line(line,arr);
         if (count_readline == 0) {
             continue;
         }
         end_program_1=judge(arr,count_readline);
-        if ( end_program_1 == 1 ) break;       
-        }
-    fclose(fp_read);
+        if ( end_program_1 == 1 )
+            break;
+    }//从文件读取命令并执行
+
+
+    fclose(fp_read_command);
+    save();
     return 0;
 }
