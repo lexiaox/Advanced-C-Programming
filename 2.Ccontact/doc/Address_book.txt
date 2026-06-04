@@ -1,0 +1,3 @@
+name   |phone    |age
+lyc   |1245    |14
+fyz   |23445    |14
